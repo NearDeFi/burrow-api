@@ -1,6 +1,4 @@
-This is a [Next.js](https://nextjs.org/) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
-
-## Getting Started
+## Burrow API
 
 First, run the development server:
 
@@ -12,23 +10,81 @@ yarn dev
 
 Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
-You can start editing the page by modifying `pages/index.tsx`. The page auto-updates as you edit the file.
+### Count transactions
 
-[API routes](https://nextjs.org/docs/api-routes/introduction) can be accessed on [http://localhost:3000/api/hello](http://localhost:3000/api/hello). This endpoint can be edited in `pages/api/hello.ts`.
+```
+http://localhost:3000/api/transactions/count/account.near
+```
 
-The `pages/api` directory is mapped to `/api/*`. Files in this directory are treated as [API routes](https://nextjs.org/docs/api-routes/introduction) instead of React pages.
+Output:
 
-## Learn More
+```JSON
+{
+  "count": 1234
+}
+```
 
-To learn more about Next.js, take a look at the following resources:
+### List transactions
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+```
+http://localhost:3000/api/transactions/account.near
+```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js/) - your feedback and contributions are welcome!
+Optional parameters:
 
-## Deploy on Vercel
+```
+http://localhost:3000/api/transactions/thankyouser.near?limit=3&offset=0
+```
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+Output:
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/deployment) for more details.
+```JSON
+[
+  {
+    "block_timestamp": "1661976362981090829",
+    "receipt_id": "25ZLqJFdzoLmS2z16vyFnAC1LXxFLWmDZcgZSTR6tU5q",
+    "status": "SUCCESS",
+    "event": {
+      "event": "repay",
+      "data": [
+        {
+          "account_id": "thankyouser.near",
+          "amount": "27353874074849452841",
+          "token_id": "aaaaaa20d9e0e2461697782ef11675f668207961.factory.bridge.near"
+        }
+      ]
+    }
+  },
+  {
+    "block_timestamp": "1661976357278500499",
+    "receipt_id": "9WKwqCUgFXptfhd6PGokYaYVfCS1L1DsDuBjvT48pAxy",
+    "status": "SUCCESS",
+    "event": {
+      "event": "deposit",
+      "data": [
+        {
+          "account_id": "thankyouser.near",
+          "amount": "27353873584136855096",
+          "token_id": "aaaaaa20d9e0e2461697782ef11675f668207961.factory.bridge.near"
+        }
+      ]
+    }
+  },
+  {
+    "block_timestamp": "1661976315116575206",
+    "receipt_id": "4PJpML1taQ6rymAn1rXksQHz2xXEheCxAgG1GSdQU4vx",
+    "status": "SUCCESS",
+    "event": {
+      "event": "withdraw_succeeded",
+      "data": [
+        {
+          "account_id": "thankyouser.near",
+          "amount": "283452591261908519592090",
+          "token_id": "wrap.near"
+        }
+      ]
+    }
+  }
+]
+
+```
