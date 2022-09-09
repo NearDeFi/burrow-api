@@ -1,0 +1,36 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// We could not retrieve columns for the underlying table. Either it has none or you are missing rights to see them. Please check your privileges.
+// model diesel_schema_migrations {
+// 
+//  @@map("__diesel_schema_migrations")
+// }
+model events {
+  block_height    Decimal                  @db.Decimal(20, 0)
+  block_hash      String
+  block_timestamp Decimal                  @db.Decimal(20, 0)
+  block_epoch_id  String
+  receipt_id      String
+  log_index       Int
+  predecessor_id  String
+  account_id      String
+  status          execution_outcome_status
+  event           String
+
+  @@id([receipt_id, log_index], map: "execution_outcome_receipt_pk")
+  @@index([account_id], map: "event_account_id_idx", type: Hash)
+  @@index([block_height], map: "event_block_height_idx")
+  @@index([predecessor_id], map: "event_predecessor_id_idx", type: Hash)
+}
+
+enum execution_outcome_status {
+  FAILURE
+  SUCCESS
+}
