@@ -6,8 +6,8 @@ interface Error {
 }
 
 interface Ok {
-  ok: boolean;
-  ip: string | string[] | undefined;
+  blocked: boolean;
+  ip?: string | string[] | undefined;
 }
 
 const cors = Cors({
@@ -32,9 +32,20 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
   try {
     const ip = req.headers["x-forwarded-for"];
 
-    console.log(ip);
+    if (!ip) return res.status(200).json({ blocked: false });
 
-    return res.status(200).json({ ok: true, ip });
+    const ipInfo = await fetch(`https://vpnapi.io/api/${ip}?key=${process.env.VPNAPI_KEY}`).then(
+      (r) => r.json(),
+    );
+
+    const {
+      security: { vpn, proxy, tor, relay },
+      location: { country_code: country },
+    } = ipInfo;
+
+    const isBocked = vpn || proxy || tor || relay || country === "US";
+
+    return res.status(200).json({ blocked: isBocked, ip });
   } catch (e) {
     console.error(e);
     return res.status(500).json({ error: String(e) });
