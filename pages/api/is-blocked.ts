@@ -7,8 +7,7 @@ interface Error {
 
 interface Ok {
   ok: boolean;
-  ip: string | undefined;
-  forwarded: string | string[] | undefined;
+  ip: string | string[] | undefined;
 }
 
 const cors = Cors({
@@ -31,12 +30,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
   await runMiddleware(req, res, cors);
 
   try {
-    const ip = req.socket.remoteAddress;
-    const forwarded = req.headers["x-forwarded-for"];
+    const ip = req.headers["x-forwarded-for"];
 
-    console.log(ip, forwarded);
+    console.log(ip);
 
-    return res.status(200).json({ ok: true, ip, forwarded });
+    return res.status(200).json({ ok: true, ip });
   } catch (e) {
     console.error(e);
     return res.status(500).json({ error: String(e) });
