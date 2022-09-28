@@ -9,5 +9,8 @@
     "prettier",
     "next/core-web-vitals"
   ],
+  "rules": {
+    "@typescript-eslint/ban-types": 0
+  },
   "plugins": ["@typescript-eslint", "prettier"]
 }
