@@ -28,6 +28,7 @@ function runMiddleware(req: NextApiRequest, res: NextApiResponse, fn: Function) 
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse<Ok | Error>) {
   await runMiddleware(req, res, cors);
+  return res.status(200).json({ blocked: false });
 
   try {
     const ip = req.headers["x-forwarded-for"];
