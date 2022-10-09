@@ -1,5 +1,6 @@
 import Cors from "cors";
 import type { NextApiRequest, NextApiResponse } from "next";
+import { createClient } from "redis";
 
 const BLOCKED_COUNTRIES = [
   "CU", // Cuba
@@ -24,7 +25,7 @@ interface Error {
 
 interface Ok {
   blocked: boolean;
-  ip?: string | string[] | undefined;
+  ip?: string;
 }
 
 const cors = Cors({
@@ -47,7 +48,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
   await runMiddleware(req, res, cors);
 
   try {
-    const ip = req.headers["x-forwarded-for"];
+    const client = createClient({ url: process.env.REDIS_URL });
+    await client.connect();
+
+    const ip = req.headers["x-forwarded-for"] as string;
 
     if (!ip) return res.status(200).json({ blocked: false });
 
@@ -65,6 +69,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
     } = ipInfo;
 
     const blocked = vpn || proxy || tor || relay || BLOCKED_COUNTRIES.includes(countryCode);
+
+    await client.set(ip, blocked ? 1 : 0);
+    await client.disconnect();
 
     return res.status(200).json({ blocked, ip });
   } catch (e) {
