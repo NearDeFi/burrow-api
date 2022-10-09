@@ -55,6 +55,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
 
     if (!ip) return res.status(200).json({ blocked: false });
 
+    const value = await client.get(ip);
+
+    if (value !== null) {
+      return res.status(200).json({ blocked: !!value, ip });
+    }
+
     const response = await fetch(`https://vpnapi.io/api/${ip}?key=${process.env.VPNAPI_KEY}`);
 
     if (!response.ok) {
