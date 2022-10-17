@@ -17,6 +17,7 @@ const BLOCKED_COUNTRIES = [
   "SY", // Syria
   "VE", // Venezuela
   "YE", // Yemen
+  "US", // United States
 ];
 
 interface Error {
