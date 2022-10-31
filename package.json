@@ -16,13 +16,17 @@
     "@prisma/client": "^4.3.1",
     "@types/cors": "^2.8.12",
     "cors": "^2.8.5",
+    "decimal.js": "^10.4.2",
     "husky": "^8.0.1",
+    "lodash": "^4.17.21",
+    "near-api-js": "^~0.44.2",
     "next": "12.3.0",
     "react": "18.2.0",
     "react-dom": "18.2.0",
     "redis": "^4.3.1"
   },
   "devDependencies": {
+    "@types/lodash": "^4.14.186",
     "@types/node": "18.7.16",
     "@types/react": "18.0.18",
     "@types/react-dom": "18.0.6",
