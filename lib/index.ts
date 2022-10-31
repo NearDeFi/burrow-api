@@ -2,7 +2,7 @@ import * as nearAPI from "near-api-js";
 import Decimal from "decimal.js";
 
 import { CONTRACT_NAME } from "./config";
-import { sumReducer, toUsd, transformContractAssets } from "./utils";
+import { getTotalBalance, shrinkToken, sumReducer, toUsd, transformContractAssets } from "./utils";
 import { IftContractCall } from "./interfaces";
 import { config } from "./config";
 
@@ -18,7 +18,14 @@ export const ftContractCall = async ({
   const account = await near.account("root.near");
 
   const contract = new nearAPI.Contract(account, contractName, {
-    viewMethods: ["get_asset", "get_assets_paged", "ft_metadata", "get_config", "get_price_data"],
+    viewMethods: [
+      "get_asset",
+      "get_assets_paged",
+      "ft_metadata",
+      "get_config",
+      "get_price_data",
+      "get_asset_farm",
+    ],
     changeMethods: [],
   }) as any;
 
@@ -53,7 +60,33 @@ export const getAssets = async () => {
   return transformContractAssets(assetsDetailed, metadata, prices, refPrices);
 };
 
-export const getRewards = (assets: any) => {
+const getNetLiquidityAPY = async (assets: any) => {
+  const netLiquidityFarm = await ftContractCall({
+    method: "get_asset_farm",
+    args: { farm_id: "NetTvl" },
+  });
+
+  const totalDailyNetLiquidityRewards = Object.entries(netLiquidityFarm.rewards)
+    .map(([rewardTokenId, farm]: any) => {
+      const rewardAsset = assets.find((a: any) => a.token_id === rewardTokenId);
+      const assetDecimals = rewardAsset.metadata.decimals + rewardAsset.config.extra_decimals;
+      const dailyAmount = Number(shrinkToken(farm.reward_per_day, assetDecimals));
+      return dailyAmount * rewardAsset.price.usd * (rewardAsset.config.net_tvl_multiplier / 10000);
+    })
+    .reduce(sumReducer, 0);
+
+  const supplied = getTotalBalance(assets, "supplied");
+  const borrowed = getTotalBalance(assets, "borrowed");
+
+  const totalProtocolLiquidity = supplied - borrowed;
+  const netLiquidtyAPY = ((totalDailyNetLiquidityRewards * 365) / totalProtocolLiquidity) * 100;
+
+  return netLiquidtyAPY;
+};
+
+export const getRewards = async (assets: any) => {
+  const apyRewardTvl = await getNetLiquidityAPY(assets);
+
   const rewards = assets.map((asset: any) => {
     const apyBase = asset["supply_apr"] * 100;
     const tokenId = asset.token_id;
@@ -90,6 +123,7 @@ export const getRewards = (assets: any) => {
       symbol: asset.metadata.symbol,
       tvlUsd: totalDeposits,
       apyReward,
+      apyRewardTvl,
       apyBase,
       rewardTokens,
     };

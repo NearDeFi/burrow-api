@@ -2,7 +2,11 @@ import Decimal from "decimal.js";
 
 export const sumReducer = (sum: number, a: number) => sum + a;
 
-const shrinkToken = (value: string | number, decimals: string | number, fixed?: number): string => {
+export const shrinkToken = (
+  value: string | number,
+  decimals: string | number,
+  fixed?: number,
+): string => {
   return new Decimal(value).div(new Decimal(10).pow(decimals)).toFixed(fixed);
 };
 
@@ -28,3 +32,14 @@ export const transformContractAssets = (assets: any, metadata: any, prices: any,
       },
     };
   });
+
+export const getTotalBalance = (assets: any, source: "borrowed" | "supplied") =>
+  assets
+    .map((asset: any) => {
+      const netTvlMultiplier = asset.config.net_tvl_multiplier / 10000;
+      return (
+        toUsd(asset[source].balance, asset) * netTvlMultiplier +
+        (source === "supplied" ? toUsd(asset.reserved, asset) * netTvlMultiplier : 0)
+      );
+    })
+    .reduce(sumReducer, 0);
