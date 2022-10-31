@@ -1,5 +1,6 @@
 import * as nearAPI from "near-api-js";
 import Decimal from "decimal.js";
+import { uniq } from "lodash";
 
 import { CONTRACT_NAME } from "./config";
 import { getTotalBalance, shrinkToken, sumReducer, toUsd, transformContractAssets } from "./utils";
@@ -65,7 +66,6 @@ const getNetLiquidityAPY = async (assets: any) => {
     method: "get_asset_farm",
     args: { farm_id: "NetTvl" },
   });
-
   const totalDailyNetLiquidityRewards = Object.entries(netLiquidityFarm.rewards)
     .map(([rewardTokenId, farm]: any) => {
       const rewardAsset = assets.find((a: any) => a.token_id === rewardTokenId);
@@ -81,11 +81,15 @@ const getNetLiquidityAPY = async (assets: any) => {
   const totalProtocolLiquidity = supplied - borrowed;
   const netLiquidtyAPY = ((totalDailyNetLiquidityRewards * 365) / totalProtocolLiquidity) * 100;
 
-  return netLiquidtyAPY;
+  const rewardTokens = Object.entries(netLiquidityFarm.rewards).map(
+    ([rewardTokenId]) => rewardTokenId,
+  );
+
+  return [netLiquidtyAPY, rewardTokens];
 };
 
 export const getRewards = async (assets: any) => {
-  const apyRewardTvl = await getNetLiquidityAPY(assets);
+  const [apyRewardTvl, rewardTokensTVL] = (await getNetLiquidityAPY(assets)) as any;
 
   const rewards = assets.map((asset: any) => {
     const apyBase = asset["supply_apr"] * 100;
@@ -95,8 +99,10 @@ export const getRewards = async (assets: any) => {
     const suppliedFarmRewards =
       asset.farms.find((farm: any) => farm.farm_id.Supplied === tokenId)?.rewards || {};
 
-    const rewardTokens = Object.entries(suppliedFarmRewards).map(
-      ([rewardTokenId]) => rewardTokenId,
+    const rewardTokens = uniq(
+      Object.entries(suppliedFarmRewards)
+        .map(([rewardTokenId]) => rewardTokenId)
+        .concat(rewardTokensTVL),
     );
 
     const apyRewards = Object.entries(suppliedFarmRewards).map(([rewardTokenId, reward]: any) => {
