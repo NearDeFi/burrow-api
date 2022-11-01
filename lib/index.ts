@@ -93,8 +93,10 @@ export const getRewards = async (assets: any) => {
 
   const rewards = assets.map((asset: any) => {
     const apyBase = asset["supply_apr"] * 100;
+    const apyBaseBorrow = asset["borrow_apr"] * 100;
     const tokenId = asset.token_id;
-    const totalDeposits = toUsd(asset.supplied.balance, asset);
+    const totalSupplyUsd = toUsd(asset.supplied.balance, asset);
+    const totalBorrowUsd = toUsd(asset.borrowed.balance, asset);
 
     const suppliedFarmRewards =
       asset.farms.find((farm: any) => farm.farm_id.Supplied === tokenId)?.rewards || {};
@@ -114,7 +116,7 @@ export const getRewards = async (assets: any) => {
           .div(new Decimal(10).pow(decimals))
           .mul(365)
           .mul(price)
-          .div(totalDeposits)
+          .div(totalSupplyUsd)
           .mul(100)
           .toNumber() || 0
       );
@@ -122,16 +124,45 @@ export const getRewards = async (assets: any) => {
 
     const apyReward = apyRewards.reduce(sumReducer, 0);
 
+    const borrowedFarmRewards =
+      asset.farms.find((farm: any) => farm.farm_id.Borrowed === tokenId)?.rewards || {};
+
+    const rewardTokensBorrow = Object.entries(borrowedFarmRewards).map(
+      ([rewardTokenId]) => rewardTokenId,
+    );
+
+    const apyRewardBorrow = Object.entries(borrowedFarmRewards)
+      .map(([rewardTokenId, reward]: any) => {
+        const rewardAsset = assets.find((a: any) => a.token_id === rewardTokenId);
+        const decimals = rewardAsset.metadata.decimals + rewardAsset.config.extra_decimals;
+        const price = rewardAsset.price?.usd || 0;
+        return (
+          new Decimal(reward.reward_per_day)
+            .div(new Decimal(10).pow(decimals))
+            .mul(365)
+            .mul(price)
+            .div(totalBorrowUsd)
+            .mul(100)
+            .toNumber() || 0
+        );
+      })
+      .reduce(sumReducer, 0);
+
     return {
       token_id: asset.token_id,
       chain: "NEAR",
       project: "Burrow",
       symbol: asset.metadata.symbol,
-      tvlUsd: totalDeposits,
+      tvlUsd: totalSupplyUsd - totalBorrowUsd,
       apyReward,
       apyRewardTvl,
       apyBase,
       rewardTokens,
+      totalSupplyUsd,
+      totalBorrowUsd,
+      apyBaseBorrow,
+      apyRewardBorrow,
+      rewardTokensBorrow,
     };
   });
 
