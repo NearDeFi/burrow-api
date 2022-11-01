@@ -163,6 +163,7 @@ export const getRewards = async (assets: any) => {
       apyBaseBorrow,
       apyRewardBorrow,
       rewardTokensBorrow,
+      ltv: asset.config.volatility_ratio,
     };
   });
 
