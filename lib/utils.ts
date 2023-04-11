@@ -23,12 +23,13 @@ export const transformContractAssets = (assets: any, metadata: any, prices: any,
       Number(price?.price?.multiplier) / 10 ** (price?.price?.decimals - metadata[i].decimals);
 
     delete metadata[i].icon;
+
     return {
       ...asset,
       metadata: metadata[i],
       price: {
         ...price?.price,
-        usd: usd ? usd : Number(refPrices[asset.token_id].price),
+        usd: usd ? usd : Number(refPrices[asset.token_id]?.price) || 0,
       },
     };
   });
